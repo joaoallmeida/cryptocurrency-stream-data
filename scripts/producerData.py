@@ -43,4 +43,4 @@ for symbol in symbols:
         logging.error(f'Data message failed.')
         raise e
     
-    time.sleep(30)
+    time.sleep(60)
