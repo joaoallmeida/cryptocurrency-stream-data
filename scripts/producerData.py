@@ -28,10 +28,9 @@ symbols = [a['symbol'] for a in json.loads(requests.get(F'{URL_BASE}/stocks').co
 
 for symbol in symbols:   
     
-    try:     
+    logging.info(f'Getting general information to symbol: {symbol}')
         
-        logging.info(f'Getting general information to symbol: {symbol}')
-        
+    try:      
         response = requests.get(f'{URL_BASE}/time_series?symbol={symbol}&intervel=30min&apikey={API_KEY}')
         dataMessage = json.loads(response.content)
         
@@ -44,6 +43,4 @@ for symbol in symbols:
         logging.error(f'Data message failed.')
         raise e
     
-    time.sleep(5)
-    
-    break
+    time.sleep(30)
