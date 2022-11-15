@@ -1,5 +1,3 @@
-from twelvedata import TDClient
-from dotenv import load_dotenv
 from os import environ
 from kafka import KafkaProducer
 
@@ -7,13 +5,13 @@ import requests
 import json
 import time
 import logging
+from websocket import create_connection
 
-load_dotenv()
 
-API_KEY = environ.get('API_KEY')
 BOOSTRAP_SERVER = '192.168.15.14:9093'
 TOPIC_NAME = 'financial-data'
-URL_BASE = 'https://api.twelvedata.com'
+URL_BASE = 'https://api.coincap.io/v2'
+SOCKET_BASE = 'wss://ws.coincap.io/prices?assets=ALL'
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s -> %(message)s',datefmt='%y-%m-%d %H:%M:%S')
 
@@ -22,25 +20,33 @@ producer = KafkaProducer(
                     ,value_serializer=lambda v: json.dumps(v).encode('utf-8')
                 )
 
-logging.info('Getting all symbols available')
+statusCode = 200
 
-symbols = [a['symbol'] for a in json.loads(requests.get(F'{URL_BASE}/stocks').content)['data']]
-
-for symbol in symbols:   
+while statusCode == 200 :
     
-    logging.info(f'Getting general information to symbol: {symbol}')
-        
+    logging.info('Getting data from source!')
+    
     try:      
-        response = requests.get(f'{URL_BASE}/time_series?symbol={symbol}&intervel=30min&apikey={API_KEY}')
-        dataMessage = json.loads(response.content)
+            
+        response = requests.get(f'{URL_BASE}/assets?limit=2000',stream=True)
         
-        logging.info(f'Send data to kafka topic - {TOPIC_NAME}')
-        logging.info(f'Data from symbol - {symbol}')
+        response.raise_for_status()
         
-        producer.send(TOPIC_NAME,  dataMessage)
-    
+        statusCode = response.status_code
+        
+        for line in response.iter_lines():
+            if line:
+                
+                logging.info('Data is available for consume!')
+                dataMessage = json.loads(line)
+
+                logging.info(f'Send data to kafka topic - {TOPIC_NAME}')
+
+                producer.send(TOPIC_NAME,  dataMessage)
+        
     except Exception as e:
         logging.error(f'Data message failed.')
         raise e
-    
+
+    logging.warning('Waiting 1 minute to place a new request!')
     time.sleep(60)
