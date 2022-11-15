@@ -8,7 +8,7 @@ import logging
 from websocket import create_connection
 
 
-BOOSTRAP_SERVER = '192.168.15.14:9093'
+BOOSTRAP_SERVER = 'localhost:9093'
 TOPIC_NAME = 'financial-data'
 URL_BASE = 'https://api.coincap.io/v2'
 SOCKET_BASE = 'wss://ws.coincap.io/prices?assets=ALL'
