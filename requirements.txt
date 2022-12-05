@@ -1,0 +1,5 @@
+dash==2.7.0
+kafka-python==2.0.2
+pandas==1.5.2
+pymongo==4.3.3
+streamlit==1.15.2

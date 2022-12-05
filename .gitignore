@@ -127,3 +127,10 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+#Ini Files
+*.ini
+
+#Test files
+test*
+Test*
