@@ -26,7 +26,7 @@ def producerDataStream():
             
             logging.info('Getting data from source!')
               
-            response = requests.get(f'{URL_BASE}/assets?limit=2000',stream=True)
+            response = requests.get(f'{URL_BASE}/assets?limit=100',stream=True)
             response.raise_for_status()
             statusCode = response.status_code
             
