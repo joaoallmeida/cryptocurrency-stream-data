@@ -1,6 +1,7 @@
 from configparser import ConfigParser
 from datetime import datetime
 import plotly.express as px
+import plotly.graph_objects as go
 import pandas as pd
 import streamlit as st
 import pymongo
@@ -31,58 +32,68 @@ def getCryptoData():
     data = collection.find()
 
     df = pd.DataFrame(data).drop(['_id'],axis=1)
-    
+    df['priceUsd'] = round(df['priceUsd'].astype('str').astype('float'),2)
+
     return df
 
 df = getCryptoData()
 
+
 st.sidebar.header("Filter")
 
 dateFilterStart, dateFilterEnd = st.sidebar.date_input('Filter by Date',value=[df['timestamp'].min(),df['timestamp'].max()])
-symbolFilter = st.sidebar.selectbox('Select The Symbol',options=df['symbol'].unique())
+symbolFilter = st.sidebar.selectbox('Select The Symbol',options=df['symbol'].head(100).unique())
 
 dfSelection = df[ 
     ((df['timestamp'].dt.date >= dateFilterStart) & (df['timestamp'].dt.date <= dateFilterEnd)) 
     & (df['symbol'] == symbolFilter) 
 ]
 
-cryptoName = dfSelection['name'] .unique()[0]
+cryptoName = dfSelection['name'].unique()[0]
+cryptoPosition = dfSelection['rank'].unique()[0] ## Adicionar posicao no ranking na visao de KPI
 timesSeriesByPrice = dfSelection.pivot_table(index='timestamp',columns='symbol',values='priceUsd').reset_index()
-currentPrice = dfSelection.sort_values("timestamp",ascending=False)["priceUsd"].values[0]
-currentSupply = dfSelection.sort_values("timestamp",ascending=False)['supply'].values[0]
-maxSupply = dfSelection.sort_values("timestamp",ascending=False)['maxSupply'].values[0]
-marketCapUsd = dfSelection.sort_values("timestamp",ascending=False)['marketCapUsd'].values[0]
-volumeUsd24Hr = dfSelection.sort_values("timestamp",ascending=False)['volumeUsd24Hr'].values[0]
+currentPrice = round(float(str( dfSelection.sort_values("timestamp",ascending=False)["priceUsd"].values[0])),2)
+currentSupply = round(float(str( dfSelection.sort_values("timestamp",ascending=False)['supply'].values[0])),2)
+maxSupply = round(float(str( dfSelection.sort_values("timestamp",ascending=False)['maxSupply'].values[0])),2)
+marketCapUsd = round(float(str( dfSelection.sort_values("timestamp",ascending=False)['marketCapUsd'].values[0])),2)
+volumeUsd24Hr = round(float(str( dfSelection.sort_values("timestamp",ascending=False)['volumeUsd24Hr'].values[0])),2)
 
-leftCol01, leftCol02 ,middleCol01, middleCol02, rightCol01,rightCol02 = st.columns(6)
+## Create KPI header
+st.markdown('<h1 style="text-align:center">Market Info</h1>',unsafe_allow_html=True)
 
-with leftCol01:
-    st.markdown(f'<h2 style="text-align:left"> <img src="https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons@1a63530be6e374711a8554f31b17e4cb92c25fa5/128/color/{symbolFilter.lower()}.png">&nbsp;&nbsp;{cryptoName}</h2>',unsafe_allow_html=True)
+col01, col02, col03 ,Col04, Col05, col06,col07 = st.columns([5,10,10,10,10,10,10])
 
-with leftCol02:
+with col01:
+    st.image(f'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons@1a63530be6e374711a8554f31b17e4cb92c25fa5/128/color/{symbolFilter.lower()}.png')
+with col02:
+    st.markdown(f'''# {cryptoName}''')
+    st.markdown(f'#### Ranking Position {cryptoPosition}')
+with col03:
     st.subheader(':dollar: Price USD')
     st.subheader(f'$ {currentPrice:,}')
-with middleCol01:
+with Col04:
     st.subheader(':heavy_minus_sign: Supply')
     st.subheader(f'$ {currentSupply:,}')
-with middleCol02:
+with Col05:
     st.subheader(':chart_with_upwards_trend: Max Supply')
     st.subheader(f'$ {maxSupply:,}')
-with rightCol01:
+with col06:
     st.subheader(':currency_exchange: Market Cap USD')
     st.subheader(f'$ {marketCapUsd:,}')
-with rightCol02:
+with col07:
     st.subheader(':convenience_store: Volume Usd 24hr')
     st.subheader(f'$ {volumeUsd24Hr:,}')
     
 st.markdown("---")
-
 st.subheader('Times Series Price Usd')
- 
-figLineChart = px.line(
+
+
+figLineChart = px.scatter(
  timesSeriesByPrice,
  y=timesSeriesByPrice.columns,
  x='timestamp'
-)
+).update_traces(mode='lines+markers')
+
+
 
 st.plotly_chart(figLineChart,use_container_width=True)
