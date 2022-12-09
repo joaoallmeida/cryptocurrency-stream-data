@@ -49,8 +49,9 @@ dfSelection = df[
     & (df['symbol'] == symbolFilter) 
 ]
 
+## Create KPI header
 cryptoName = dfSelection['name'].unique()[0]
-cryptoPosition = dfSelection['rank'].unique()[0] ## Adicionar posicao no ranking na visao de KPI
+cryptoPosition = dfSelection['rank'].unique()[0]
 timesSeriesByPrice = dfSelection.pivot_table(index='timestamp',columns='symbol',values='priceUsd').reset_index()
 currentPrice = round(float(str( dfSelection.sort_values("timestamp",ascending=False)["priceUsd"].values[0])),2)
 currentSupply = round(float(str( dfSelection.sort_values("timestamp",ascending=False)['supply'].values[0])),2)
@@ -58,7 +59,6 @@ maxSupply = round(float(str( dfSelection.sort_values("timestamp",ascending=False
 marketCapUsd = round(float(str( dfSelection.sort_values("timestamp",ascending=False)['marketCapUsd'].values[0])),2)
 volumeUsd24Hr = round(float(str( dfSelection.sort_values("timestamp",ascending=False)['volumeUsd24Hr'].values[0])),2)
 
-## Create KPI header
 st.markdown('<h1 style="text-align:center">Market Info</h1>',unsafe_allow_html=True)
 
 col01, col02, col03 ,Col04, Col05, col06,col07 = st.columns([5,10,10,10,10,10,10])
