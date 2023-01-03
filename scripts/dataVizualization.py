@@ -18,7 +18,7 @@ st.set_page_config(
     }
 )
 
-# autoRefresh = st_autorefresh(interval=60000,key="fizzbuzzcounter")
+autoRefresh = st_autorefresh(interval=60000,key="fizzbuzzcounter")
 
 @st.experimental_singleton
 def connMongo():
@@ -56,7 +56,7 @@ def rankCrypto(df: pd.DataFrame) -> pd.DataFrame:
 
     floatColumns  = ['priceUsd','volumeUsd24Hr','vwap24Hr']
     dictRename = {
-            "rank":"Rank",
+            "rank":"#",
             "name":"Name",
             "priceUsd":"Price USD",
             "changePercent24Hr":"Change Percent 24Hr",
