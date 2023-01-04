@@ -17,8 +17,8 @@ user = 'joao.soares@deal.com.br'
 spark = (SparkSession 
             .builder 
             .appName("myApp") 
-            .config("spark.mongodb.output.uri", "mongodb+srv://admin:sU9MgLmRNY8K5TAi@devcluster.eeupfll.mongodb.net/?retryWrites=true&w=majority") 
-            .config("spark.mongodb.input.uri", "mongodb+srv://admin:sU9MgLmRNY8K5TAi@devcluster.eeupfll.mongodb.net/?retryWrites=true&w=majority") 
+            .config("spark.mongodb.output.uri", f"mongodb+srv://{credentials['username']}:{credentials['password']}@devcluster.eeupfll.mongodb.net/?retryWrites=true&w=majority") 
+            .config("spark.mongodb.input.uri", f"mongodb+srv://{credentials['username']}:{credentials['password']}@devcluster.eeupfll.mongodb.net/?retryWrites=true&w=majority") 
             .getOrCreate())          
 
 ## Reading data from Kafka
