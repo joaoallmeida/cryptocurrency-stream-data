@@ -4,8 +4,8 @@ import json
 import time
 import logging
 
-BOOSTRAP_SERVER = 'localhost:9093'
-TOPIC_NAME = 'financial-data'
+BOOSTRAP_SERVER = 'localhost:9092'
+TOPIC_NAME = 'crypto-data-stream'
 URL_BASE = 'https://api.coincap.io/v2'
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s -> %(message)s',datefmt='%y-%m-%d %H:%M:%S')

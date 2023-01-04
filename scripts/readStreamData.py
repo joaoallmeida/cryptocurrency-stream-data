@@ -22,9 +22,9 @@ spark = (SparkSession
             .getOrCreate())          
 
 ## Reading data from Kafka
-topicName = 'financial-data'
+topicName = 'crypto-data-stream'
 server = 'localhost:9092'
-streamName = 'financial'
+streamName = 'crypto'
 
 
 streamDf = (spark.readStream   
