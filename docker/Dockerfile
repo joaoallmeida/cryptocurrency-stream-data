@@ -1,21 +1,15 @@
-FROM bitnami/spark:3.3.1
+FROM python:3.9-slim
 
-USER 1001
+EXPOSE 8501
+
 WORKDIR /app
 
-# COPY requirements.txt .
-COPY ./scripts .
+COPY ./scripts/dataVizualization.py /app
+COPY ./env.ini /app
+COPY ./requirements.txt /app
 
-# RUN rm -r /opt/bitnami/spark/jars && \
-#     curl --location http://mirror.cc.columbia.edu/pub/software/apache/spark/spark-3.0.0/spark-3.0.0-bin-hadoop2.7.tgz | \
-#     tar --extract --gzip --strip=1 --directory /opt/bitnami/spark/ spark-3.0.0-bin-hadoop2.7/jars/
-    
+RUN apt-get update && apt-get install -y
+RUN python3 -m pip install --upgrade pip
+RUN pip3 install -r requirements.txt
 
-# RUN apt-get update && apt-get install -y
-# RUN python3 -m pip install --upgrade pip
-# RUN pip3 install -r ./requirements.txt
-RUN  spark-submit --master spark://spark:7077 \
-            --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.3.1,org.mongodb.spark:mongo-spark-connector:10.0.5 \
-            --conf spark.mongodb.input.uri="mongodb+srv://admin:sU9MgLmRNY8K5TAi@devcluster.eeupfll.mongodb.net/?retryWrites=true&w=majority" \
-            --conf spark.mongodb.output.uri="mongodb+srv://admin:sU9MgLmRNY8K5TAi@devcluster.eeupfll.mongodb.net/?retryWrites=true&w=majority" \
-            /app/scripts/readStreamData.py
+ENTRYPOINT ["streamlit","run","dataVizualization.py"]
