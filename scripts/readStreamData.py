@@ -1,18 +1,13 @@
 # Databricks notebook source
-from configparser import ConfigParser
 from pyspark.sql import SparkSession
 import pyspark.sql.functions as f
 import pyspark.sql.types as t
-import datetime
-import json
-import os
+import datetime ,json , os, platform, getpass
 
-config = ConfigParser()
-config.read('env.ini')
-credentials = config['MONGODB']
 
+credentials = {"username" :"USER", "password":"PASS"}
 now = datetime.datetime.now()
-user = 'joao.soares@deal.com.br'
+user = f'{getpass.getuser()}@{platform.node()}'
 
 spark = (SparkSession 
             .builder 
@@ -23,7 +18,7 @@ spark = (SparkSession
 
 ## Reading data from Kafka
 topicName = 'crypto-data-stream'
-server = 'localhost:9092'
+server = os.getenv('KAFKA_CLUSTER')
 streamName = 'crypto'
 
 
@@ -80,6 +75,15 @@ refinedDf = (refinedDf.withColumn('timestamp', f.from_unixtime((f.col('timestamp
                       .withColumn('refinedAt', f.lit(now))
 )
 
+# Debug
+# query = (
+#   refinedDf
+#     .writeStream 
+#     .format("console") 
+#     .start()
+# )
+# query.awaitTermination()
+
 ## Write to mongoDb
 connString = f"mongodb+srv://{credentials['username']}:{credentials['password']}@devcluster.eeupfll.mongodb.net/?retryWrites=true&w=majority"
 database = 'financial'
@@ -88,6 +92,7 @@ collection = 'crypto'
 def writeToMongo(df,epoch_id):
   df.write.format("mongodb").option("connection.uri", connString ).option("database", database).option("collection", collection).mode('append').save()
 
-refinedDf.writeStream.foreachBatch(writeToMongo).start()
+query = refinedDf.writeStream.foreachBatch(writeToMongo).start()
 
+query.awaitTermination()
 

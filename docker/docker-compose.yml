@@ -2,7 +2,7 @@ version: "3"
 
 services:
 
-  zookeeper:
+  zookeeper-crypto:
     image: confluentinc/cp-zookeeper:latest
     container_name: zookeeper-crypto
     ports:
@@ -11,23 +11,25 @@ services:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
     restart: unless-stopped
-  kafka:
+    
+  kafka-crypto:
     image: confluentinc/cp-kafka:latest
     container_name: kafka-crypto
     ports:
       - 9092:9092
     environment:
       KAFKA_ZOOKEEPER_CONNECT: zookeeper-crypto:2181
-      KAFKA_ADVERTISED_HOST_NAME: kafka:9092
+      KAFKA_ADVERTISED_HOST_NAME: kafka-crypto:9092
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT_HOST://localhost:9092,PLAINTEXT://kafka:29092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT_HOST://localhost:9092,PLAINTEXT://kafka-crypto:29092
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
     depends_on:
-      - zookeeper
+      - zookeeper-crypto
     volumes:
       - kafka-data-crypto:/var/lib/kafka/data/
     restart: unless-stopped
+    
   streamlit:
       image: streamlit
       build:
@@ -44,12 +46,12 @@ services:
      image: obsidiandynamics/kafdrop:latest
      container_name: kafdrop-crypto
      environment:
-       KAFKA_BROKERCONNECT: kafka:29092
+       KAFKA_BROKERCONNECT: kafka-crypto:29092
      ports:
        - 9001:9000
      depends_on:
-      - zookeeper
-      - kafka
+      - zookeeper-crypto
+      - kafka-crypto
      restart: unless-stopped
 
   spark:
@@ -61,8 +63,9 @@ services:
       - SPARK_RPC_ENCRYPTION_ENABLED=no
       - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
       - SPARK_SSL_ENABLED=no
+      - KAFKA_CLUSTER=kafka-crypto:29092
     ports:
-      - '8585:8080'
+      - 8585:8080
     volumes:
       - ../:/app
   spark-worker:
