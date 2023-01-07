@@ -5,8 +5,7 @@ import plotly.express as px
 import pandas as pd
 import streamlit as st
 import pymongo
-import time
-import pytz
+import pytz, os
 
 ## Config Web Page
 st.set_page_config(
@@ -22,10 +21,8 @@ autoRefresh = st_autorefresh(interval=60000,key="fizzbuzzcounter")
 
 @st.experimental_singleton
 def connMongo():
-    config = ConfigParser()
-    config.read('env.ini')
 
-    credentials = config['MONGODB']
+    credentials = {"username" :os.getenv('MONGODB_USER'), "password": os.getenv('MONGODB_PASS')}
     connStr = f"mongodb+srv://{credentials['username']}:{credentials['password']}@devcluster.eeupfll.mongodb.net/?retryWrites=true&w=majority"
     mongoClient = pymongo.MongoClient(connStr)
     

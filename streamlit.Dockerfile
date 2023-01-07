@@ -5,8 +5,7 @@ EXPOSE 8501
 WORKDIR /app
 
 COPY ./scripts/dataVizualization.py /app
-COPY ./env.ini /app
-COPY ./requirements.txt /app
+COPY ./requirements.txt  /app
 
 RUN apt-get update && apt-get install -y
 RUN python3 -m pip install --upgrade pip

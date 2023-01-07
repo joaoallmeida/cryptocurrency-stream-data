@@ -5,7 +5,7 @@ import pyspark.sql.types as t
 import datetime ,json , os, platform, getpass
 
 
-credentials = {"username" :"USER", "password":"PASS"}
+credentials = {"username" :os.getenv('MONGODB_USER'), "password": os.getenv('MONGODB_PASS')}
 now = datetime.datetime.now()
 user = f'{getpass.getuser()}@{platform.node()}'
 

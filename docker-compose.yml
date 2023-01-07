@@ -51,7 +51,7 @@ services:
       "
 
   # OPTIONAL
-  kafdrop:
+  kafdrop-crypto:
     image: obsidiandynamics/kafdrop:latest
     container_name: kafdrop-crypto
     environment:
@@ -63,18 +63,36 @@ services:
       - kafka-crypto
     restart: unless-stopped
 
-  streamlit:
+  kafka-producer:
+    image: python:3.9-slim
+    container_name: kafka-producer-crypto
+    depends_on:
+      - zookeeper-crypto
+      - kafka-crypto
+    environment:
+      KAFKA_CLUSTER: kafka-crypto:29092
+    volumes:
+      - ./:/app
+    entrypoint: ["/bin/sh", "-c"]
+    command: |
+       "  pip install -r /app/requirements.txt
+          python /app/scripts/producerData.py
+       "
+  streamlit-crypto:
     image: streamlit
     build:
-      context: ./docker/
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: streamlit.Dockerfile
     container_name: streamlit-crypto
+    environment:
+        MONGODB_USER: <<USER>>
+        MONGODB_PASS: <<PASS>>
     ports:
       - 8501:8501
     networks:
       - crypto-network
 
-  spark:
+  spark-crypto:
     image: docker.io/bitnami/spark:3.3.1
     container_name: spark-crypto
     environment:
@@ -87,13 +105,13 @@ services:
     ports:
       - 8585:8080
     volumes:
-      - ../:/app
-  spark-worker:
+      - ./:/app
+  spark-worker-crypto:
     image: docker.io/bitnami/spark:3.3.1
     container_name: spark-worker-crypto
     environment:
       SPARK_MODE: worker
-      SPARK_MASTER_URL: spark://spark:7077
+      SPARK_MASTER_URL: spark://spark-crypto:7077
       SPARK_WORKER_MEMORY: 1G
       SPARK_WORKER_CORES: 1
       SPARK_RPC_AUTHENTICATION_ENABLED: no
@@ -101,17 +119,19 @@ services:
       SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED: no
       SPARK_SSL_ENABLED: no
 
-  spark-run:
+  spark-run-crypto:
     image: docker.io/bitnami/spark:3.3.1
     container_name: spark-run-crypto
     depends_on:
-      - spark
-      - spark-worker
+      - spark-crypto
+      - spark-worker-crypto
     environment:
       KAFKA_CLUSTER: kafka-crypto:29092
+      MONGODB_USER: <<USER>>
+      MONGODB_PASS: <<PASS>>
     volumes:
-      - ../:/app
-    command: "spark-submit --master spark://spark:7077 --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.3.1,org.mongodb.spark:mongo-spark-connector:10.0.5 --conf spark.dynamicAllocation.enabled=false /app/scripts/readStreamData.py"
+      - ./:/app
+    command: "spark-submit --master spark://spark-crypto:7077 --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.3.1,org.mongodb.spark:mongo-spark-connector:10.0.5 --conf spark.dynamicAllocation.enabled=false /app/scripts/consumerData.py"
 
 networks:
   crypto-network:

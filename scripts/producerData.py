@@ -3,8 +3,9 @@ import requests
 import json
 import time
 import logging
+import os 
 
-BOOSTRAP_SERVER = 'localhost:9092'
+BOOSTRAP_SERVER = os.getenv('KAFKA_CLUSTER')
 TOPIC_NAME = 'crypto-data-stream'
 URL_BASE = 'https://api.coincap.io/v2'
 
