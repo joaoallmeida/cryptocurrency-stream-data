@@ -1,7 +1,6 @@
 version: "3"
 
 services:
-
   zookeeper-crypto:
     image: confluentinc/cp-zookeeper:latest
     container_name: zookeeper-crypto
@@ -10,14 +9,17 @@ services:
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
+    volumes:
+      - zookeeper-data-crypto:/var/lib/zookeeper/data
     restart: unless-stopped
-    
+
   kafka-crypto:
     image: confluentinc/cp-kafka:latest
     container_name: kafka-crypto
     ports:
       - 9092:9092
     environment:
+      KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper-crypto:2181
       KAFKA_ADVERTISED_HOST_NAME: kafka-crypto:9092
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
@@ -29,41 +31,59 @@ services:
     volumes:
       - kafka-data-crypto:/var/lib/kafka/data/
     restart: unless-stopped
-    
-  streamlit:
-      image: streamlit
-      build:
-        context: ./docker/
-        dockerfile: Dockerfile
-      container_name: streamlit-crypto
-      ports:
-        - 8501:8501
-      networks:
-        - crypto-network
 
-# OPTIONAL
+  init-kafka-crypto:
+    image: confluentinc/cp-kafka:latest
+    container_name: init-kafka-crypto
+    depends_on:
+      - kafka-crypto
+    entrypoint: ["/bin/sh", "-c"]
+    command: |
+      "
+      # blocks until kafka is reachable
+      kafka-topics --bootstrap-server kafka-crypto:29092 --list
+
+      echo -e 'Creating kafka topics'
+      kafka-topics --bootstrap-server kafka-crypto:29092 --create --topic crypto-data-stream 
+
+      echo -e 'Successfully created the following topics:'
+      kafka-topics --bootstrap-server kafka-crypto:29092 --list
+      "
+
+  # OPTIONAL
   kafdrop:
-     image: obsidiandynamics/kafdrop:latest
-     container_name: kafdrop-crypto
-     environment:
-       KAFKA_BROKERCONNECT: kafka-crypto:29092
-     ports:
-       - 9001:9000
-     depends_on:
+    image: obsidiandynamics/kafdrop:latest
+    container_name: kafdrop-crypto
+    environment:
+      KAFKA_BROKERCONNECT: kafka-crypto:29092
+    ports:
+      - 9001:9000
+    depends_on:
       - zookeeper-crypto
       - kafka-crypto
-     restart: unless-stopped
+    restart: unless-stopped
+
+  streamlit:
+    image: streamlit
+    build:
+      context: ./docker/
+      dockerfile: Dockerfile
+    container_name: streamlit-crypto
+    ports:
+      - 8501:8501
+    networks:
+      - crypto-network
 
   spark:
     image: docker.io/bitnami/spark:3.3.1
     container_name: spark-crypto
     environment:
-      - SPARK_MODE=master
-      - SPARK_RPC_AUTHENTICATION_ENABLED=no
-      - SPARK_RPC_ENCRYPTION_ENABLED=no
-      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
-      - SPARK_SSL_ENABLED=no
-      - KAFKA_CLUSTER=kafka-crypto:29092
+      SPARK_MODE: master
+      SPARK_RPC_AUTHENTICATION_ENABLED: no
+      SPARK_RPC_ENCRYPTION_ENABLED: no
+      SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED: no
+      SPARK_SSL_ENABLED: no
+      KAFKA_CLUSTER: kafka-crypto:29092
     ports:
       - 8585:8080
     volumes:
@@ -72,18 +92,32 @@ services:
     image: docker.io/bitnami/spark:3.3.1
     container_name: spark-worker-crypto
     environment:
-      - SPARK_MODE=worker
-      - SPARK_MASTER_URL=spark://spark:7077
-      - SPARK_WORKER_MEMORY=1G
-      - SPARK_WORKER_CORES=1
-      - SPARK_RPC_AUTHENTICATION_ENABLED=no
-      - SPARK_RPC_ENCRYPTION_ENABLED=no
-      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
-      - SPARK_SSL_ENABLED=no
+      SPARK_MODE: worker
+      SPARK_MASTER_URL: spark://spark:7077
+      SPARK_WORKER_MEMORY: 1G
+      SPARK_WORKER_CORES: 1
+      SPARK_RPC_AUTHENTICATION_ENABLED: no
+      SPARK_RPC_ENCRYPTION_ENABLED: no
+      SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED: no
+      SPARK_SSL_ENABLED: no
+
+  spark-run:
+    image: docker.io/bitnami/spark:3.3.1
+    container_name: spark-run-crypto
+    depends_on:
+      - spark
+      - spark-worker
+    environment:
+      KAFKA_CLUSTER: kafka-crypto:29092
+    volumes:
+      - ../:/app
+    command: "spark-submit --master spark://spark:7077 --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.3.1,org.mongodb.spark:mongo-spark-connector:10.0.5 --conf spark.dynamicAllocation.enabled=false /app/scripts/readStreamData.py"
 
 networks:
   crypto-network:
     driver: bridge
 volumes:
   kafka-data-crypto:
+    driver: local
+  zookeeper-data-crypto:
     driver: local
