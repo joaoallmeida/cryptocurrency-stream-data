@@ -1,6 +1,7 @@
 version: "3"
 
 services:
+
   zookeeper-crypto:
     image: confluentinc/cp-zookeeper:latest
     container_name: zookeeper-crypto
@@ -51,17 +52,17 @@ services:
       "
 
   # OPTIONAL
-  kafdrop-crypto:
-    image: obsidiandynamics/kafdrop:latest
-    container_name: kafdrop-crypto
-    environment:
-      KAFKA_BROKERCONNECT: kafka-crypto:29092
-    ports:
-      - 9001:9000
-    depends_on:
-      - zookeeper-crypto
-      - kafka-crypto
-    restart: unless-stopped
+  # kafdrop-crypto:
+  #   image: obsidiandynamics/kafdrop:latest
+  #   container_name: kafdrop-crypto
+  #   environment:
+  #     KAFKA_BROKERCONNECT: kafka-crypto:29092
+  #   ports:
+  #     - 9001:9000
+  #   depends_on:
+  #     - zookeeper-crypto
+  #     - kafka-crypto
+  #   restart: unless-stopped
 
   kafka-producer:
     image: python:3.9-slim
@@ -78,6 +79,7 @@ services:
        "  pip install -r /app/requirements.txt
           python /app/scripts/producerData.py
        "
+
   streamlit-crypto:
     image: streamlit
     build:
@@ -106,6 +108,7 @@ services:
       - 8585:8080
     volumes:
       - ./:/app
+      
   spark-worker-crypto:
     image: docker.io/bitnami/spark:3.3.1
     container_name: spark-worker-crypto
