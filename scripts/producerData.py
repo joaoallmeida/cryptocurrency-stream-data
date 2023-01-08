@@ -42,8 +42,8 @@ def producerDataStream():
                     producer.send(TOPIC_NAME,  dataMessage)
                     producer.flush()
             
-            logging.warning('Waiting 1 minute to place a new request!')
-            time.sleep(60)
+            logging.warning('Waiting 5 minutes to place a new request!')
+            time.sleep(300)
             
     except Exception as e:
         logging.error(f'Failed to capture API data!')
