@@ -1,6 +1,6 @@
-# Financial data streaming
+# Cryptocurrency data streaming
 
-This project is a sample for a streaming data pipeline, using apache kafka and databricks plataform.
+This project is a sample for a streaming data pipeline, using apache kafka and apache spark .
 
-<!-- # Architecture 🛠️ -->
-<!-- ![](docs/Financial-Data-Pipeline.drawio.png) -->
+# Architecture 🛠️
+![](docs/cryptocurrency-pipeline.png)
