@@ -17,7 +17,7 @@ st.set_page_config(
     }
 )
 
-autoRefresh = st_autorefresh(interval=60000,key="fizzbuzzcounter")
+autoRefresh = st_autorefresh(interval=300000,key="fizzbuzzcounter")
 
 @st.experimental_singleton
 def connMongo():

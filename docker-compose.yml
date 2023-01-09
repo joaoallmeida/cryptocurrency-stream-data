@@ -52,17 +52,17 @@ services:
       "
 
   # OPTIONAL
-  # kafdrop-crypto:
-  #   image: obsidiandynamics/kafdrop:latest
-  #   container_name: kafdrop-crypto
-  #   environment:
-  #     KAFKA_BROKERCONNECT: kafka-crypto:29092
-  #   ports:
-  #     - 9001:9000
-  #   depends_on:
-  #     - zookeeper-crypto
-  #     - kafka-crypto
-  #   restart: unless-stopped
+  kafdrop-crypto:
+    image: obsidiandynamics/kafdrop:latest
+    container_name: kafdrop-crypto
+    environment:
+      KAFKA_BROKERCONNECT: kafka-crypto:29092
+    ports:
+      - 9001:9000
+    depends_on:
+      - zookeeper-crypto
+      - kafka-crypto
+    restart: unless-stopped
 
   kafka-producer:
     image: python:3.9-slim
@@ -79,6 +79,7 @@ services:
        "  pip install -r /app/requirements.txt
           python /app/scripts/producerData.py
        "
+    restart: on-failure
 
   streamlit-crypto:
     image: streamlit
@@ -88,11 +89,12 @@ services:
     container_name: streamlit-crypto
     environment:
         MONGODB_USER: <<USER>>
-        MONGODB_PASS: <<PASS>>
+        MONGODB_PASS: <<PASSWORD>>
     ports:
       - 8501:8501
     networks:
       - crypto-network
+    restart: unless-stopped
 
   spark-crypto:
     image: docker.io/bitnami/spark:3.3.1
@@ -108,6 +110,7 @@ services:
       - 8585:8080
     volumes:
       - ./:/app
+    restart: unless-stopped
       
   spark-worker-crypto:
     image: docker.io/bitnami/spark:3.3.1
@@ -121,6 +124,7 @@ services:
       SPARK_RPC_ENCRYPTION_ENABLED: no
       SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED: no
       SPARK_SSL_ENABLED: no
+    restart: unless-stopped
 
   spark-run-crypto:
     image: docker.io/bitnami/spark:3.3.1
@@ -131,10 +135,11 @@ services:
     environment:
       KAFKA_CLUSTER: kafka-crypto:29092
       MONGODB_USER: <<USER>>
-      MONGODB_PASS: <<PASS>>
+      MONGODB_PASS: <<PASSWORD>>
     volumes:
       - ./:/app
     command: "spark-submit --master spark://spark-crypto:7077 --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.3.1,org.mongodb.spark:mongo-spark-connector:10.0.5 --conf spark.dynamicAllocation.enabled=false /app/scripts/consumerData.py"
+    restart: unless-stopped
 
 networks:
   crypto-network:
