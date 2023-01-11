@@ -104,7 +104,7 @@ placeholder = st.empty()
 with st.sidebar:
     st.markdown('<h1 style="text-align:center">Filter</h1>',unsafe_allow_html=True)
     
-    dateFilterStart , dateFilterEnd = st.date_input('Date Filter',value=[(df['timestamp'].max() - timedelta(days=1)),df['timestamp'].max()],disabled=False)
+    dateFilterStart , dateFilterEnd = st.date_input('Date Filter',value=[df['timestamp'].max(),df['timestamp'].max()],disabled=False)
     symbolFilter = st.selectbox('Select the Symbol',options=df['symbol'].unique())
 
     st.markdown('---')
